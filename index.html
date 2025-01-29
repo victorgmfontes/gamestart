@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo de Avaliação de Múltiplas Vítimas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    .victim {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background: #fff;
+    }
+    .buttons {
+      margin-top: 10px;
+    }
+    button {
+      margin-right: 10px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ddd;
+    }
+    .green {
+      color: #fff;
+      background-color: #28a745;
+    }
+    .yellow {
+      color: #fff;
+      background-color: #ffc107;
+    }
+    .red {
+      color: #fff;
+      background-color: #dc3545;
+    }
+    .black {
+      color: #fff;
+      background-color: #343a40;
+    }
+    #score {
+      margin: 20px 0;
+      font-size: 18px;
+    }
+    #start-game {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #start-game:hover {
+      background-color: #0056b3;
+    }
+    #timer {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 10px;
+      background-color: #343a40;
+      color: #fff;
+      border-radius: 5px;
+    }
+  </style>
+
+  
+<header style="background-color: #B22222; color: white; padding: 20px; display: flex; align-items: center; justify-content: space-between;">
+  <div style="display: flex; align-items: center;">
+    <img src="https://i.imgur.com/7KsPOV6.png" alt="Logo" style="height: 90px; margin-right: 15px;">
+    <div>
+      <h1 style="margin: 0;">Método START</h1>
+      <p style="margin: 0; font-size: 14px;">Método START - Atendimento Pré-Hospitalar</p>
+    <p style="margin: 0; font-size: 14px;">Instrutora Gabi Cabral e Victor Fontes</p>
+    </div>
+  </div>
+  <nav>
+    <a href="index.html" style="color: white; text-decoration: none; margin-right: 15px;">Home</a>
+    <a href="pagina2.html" style="color: white; text-decoration: none;"</a>
+  </nav>
+</header>
+
+</head>
+<body>
+ 
+  <p> </p>
+    <a href=" " target="_blank"> </a>
+    <p>Avalie cada vítima e classifique corretamente. Ganhe 1 ponto para cada classificação correta e perca 1 ponto para cada classificação incorreta.
+      <br>Um cronômetro marcará seu tempo, lembre-se que no START a classificação deve ser feita o mais rápido possível.</p>
+  <div id="score">Pontuação: 0</div>
+  <button id="start-game">Iniciar Jogo</button>
+  <div id="timer" style="display: none;">Tempo: 0s</div>
+  <div id="game"></div>
+
+  <script>
+    const emojis = [
+      '👩', '👨', '🧒', '👦', '👧', '👩‍🦱', '👨‍🦱', '👩‍🦳', '👨‍🦳', '👩‍🦰',
+      '👨‍🦰', '👩‍🦲', '👨‍🦲', '👩‍⚕️', '👨‍⚕️', '👩‍🌾', '👨‍🌾', '👩‍🍳', '👨‍🍳', '👩‍🎓',
+      '👨‍🎓', '👩‍🏫', '👨‍🏫', '👩‍⚖️', '👨‍⚖️', '👩‍🔧', '👨‍🔧', '👩‍🏭', '👨‍🏭', '👩‍💼',
+      '👨‍💼', '👩‍🔬', '👨‍🔬', '👩‍💻', '👨‍💻', '👩‍🎤', '👨‍🎤', '👩‍🚒', '👨‍🚒', '🦸‍♀️'
+    ];
+
+    const victims = Array.from({ length: 40 }, (_, i) => ({
+      id: i + 1,
+      canWalk: Math.random() < 0.5,
+      breathes: Math.random() < 0.7,
+      airwayOpened: false,
+      breathingAfterAirway: Math.random() < 0.5,
+      respiratoryRate: Math.floor(Math.random() * 40) + 1,
+      capillaryRefill: Math.random() * 3,
+      obeysCommands: Math.random() < 0.6,
+      classified: false,
+      playerClassification: null,
+      correctClassification: null,
+      isCorrect: null,
+      emoji: emojis[i]
+    }));
+
+    victims.forEach(victim => {
+      if (victim.breathes) {
+        victim.respiratoryRate = Math.floor(Math.random() * 40) + 1;
+      } else {
+        victim.respiratoryRate = 0;
+      }
+
+      if (!victim.breathes && !victim.breathingAfterAirway) {
+        victim.capillaryRefill = 0;
+        victim.obeysCommands = false;
+      }
+
+      victim.correctClassification = victim.canWalk ? "Verde"
+        : !victim.breathes ? (victim.breathingAfterAirway ? "Vermelho" : "Preto")
+        : (victim.respiratoryRate > 30 || victim.respiratoryRate < 10) ? "Vermelho"
+        : victim.capillaryRefill > 2 ? "Vermelho"
+        : victim.obeysCommands ? "Amarelo"
+        : "Vermelho";
+    });
+
+    let score = 0;
+    let startTime;
+    let timerInterval;
+    const gameContainer = document.getElementById("game");
+    const scoreDiv = document.getElementById("score");
+    const timerDiv = document.getElementById("timer");
+
+    document.getElementById("start-game").addEventListener("click", () => {
+      startTime = Date.now();
+      timerDiv.style.display = "block";
+      startTimer();
+      renderVictims();
+    });
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+        timerDiv.textContent = `Tempo: ${elapsedTime}s`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(timerInterval);
+    }
+
+    function updateScore(points) {
+      score += points;
+      scoreDiv.textContent = `Pontuação: ${score}`;
+    }
+
+    function renderVictims() {
+      gameContainer.innerHTML = '';
+      victims.forEach(renderVictim);
+    }
+
+    function renderVictim(victim) {
+      const victimDiv = document.createElement("div");
+      victimDiv.className = "victim";
+      victimDiv.innerHTML = `
+        <h3>Vítima ${victim.id} ${victim.emoji}</h3>
+        <div id="status-${victim.id}">
+          <p>${victim.canWalk ? 'Esta vítima pode andar. Escolha uma ação:' : 'Esta vítima não pode andar. Escolha uma ação:'}</p>
+          <button onclick="checkBreathing(${victim.id})">Verificar Respiração</button>
+          <button onclick="evaluateCapillaryRefill(${victim.id})">Avaliar Perfusão</button>
+          <button onclick="checkObeysCommands(${victim.id})">Verificar Comandos Simples</button>
+        </div>
+        <div id="classify-${victim.id}">
+          <p>Classifique esta vítima:</p>
+          <button class="green" onclick="classify(${victim.id}, 'Verde')">Verde</button>
+          <button class="yellow" onclick="classify(${victim.id}, 'Amarelo')">Amarelo</button>
+          <button class="red" onclick="classify(${victim.id}, 'Vermelho')">Vermelho</button>
+          <button class="black" onclick="classify(${victim.id}, 'Preto')">Preto</button>
+        </div>`;
+      gameContainer.appendChild(victimDiv);
+    }
+
+    function checkBreathing(id) {
+      const victim = victims.find(v => v.id === id);
+      const statusDiv = document.getElementById(`status-${id}`);
+
+      if (victim.canWalk) {
+        victim.breathes = true;
+      }
+
+      if (victim.breathes) {
+        statusDiv.innerHTML += `<p>A vítima está respirando. Escolha uma ação:</p>
+          <button onclick="evaluateRespiratoryRate(${id})">Avaliar Frequência Respiratória</button>`;
+      } else {
+        statusDiv.innerHTML += `<p>A vítima não está respirando. Escolha uma ação:</p>
+          <button onclick="openAirway(${id})">Posicionar Via Aérea</button>`;
+      }
+    }
+
+    function openAirway(id) {
+      const victim = victims.find(v => v.id === id);
+      const statusDiv = document.getElementById(`status-${id}`);
+
+      if (victim.breathingAfterAirway) {
+        statusDiv.innerHTML += `<p>A vítima voltou a respirar após posicionar a via aérea.</p>`;
+      } else {
+        statusDiv.innerHTML += `<p>A vítima não voltou a respirar após posicionar a via aérea.</p>`;
+      }
+    }
+
+    function evaluateRespiratoryRate(id) {
+      const victim = victims.find(v => v.id === id);
+      const statusDiv = document.getElementById(`status-${id}`);
+
+      if (victim.canWalk) {
+        victim.respiratoryRate = Math.floor(Math.random() * 21) + 10;
+      } else if (victim.respiratoryRate === 0) {
+        victim.respiratoryRate = Math.floor(Math.random() * 50) + 1;
+      }
+
+      statusDiv.innerHTML += `<p>A frequência respiratória é ${victim.respiratoryRate}.</p>`;
+    }
+
+    function evaluateCapillaryRefill(id) {
+      const victim = victims.find(v => v.id === id);
+      const statusDiv = document.getElementById(`status-${id}`);
+
+      if (victim.canWalk) {
+        victim.capillaryRefill = Math.random() * 2;
+      }
+
+      statusDiv.innerHTML += `<p>O enchimento capilar é ${victim.capillaryRefill.toFixed(1)} segundos.</p>`;
+    }
+
+    function checkObeysCommands(id) {
+      const victim = victims.find(v => v.id === id);
+      const statusDiv = document.getElementById(`status-${id}`);
+
+      if (victim.canWalk) {
+        victim.obeysCommands = true;
+      }
+
+      statusDiv.innerHTML += victim.obeysCommands ? `<p>A vítima obedece comandos simples.</p>` : `<p>A vítima não obedece comandos simples.</p>`;
+    }
+
+    function classify(id, classification) {
+      const victim = victims.find(v => v.id === id);
+
+      if (victim.classified) return;
+
+      victim.classified = true;
+      victim.playerClassification = classification;
+
+      victim.isCorrect = victim.playerClassification === victim.correctClassification;
+
+      if (victim.isCorrect) {
+        updateScore(1);
+        alert(`Correta! A classificação correta era ${victim.correctClassification}.`);
+      } else {
+        updateScore(-1);
+        alert(`Errada! A classificação correta era ${victim.correctClassification}.`);
+      }
+
+      const statusDiv = document.getElementById(`status-${id}`);
+      const classifyDiv = document.getElementById(`classify-${id}`);
+      statusDiv.innerHTML = `<p>Classificação final: ${classification} (Correta: ${victim.correctClassification})</p>`;
+      classifyDiv.innerHTML = '';
+
+      if (victims.every(v => v.classified)) {
+        stopTimer();
+        const endTime = Date.now();
+        const totalTime = Math.floor((endTime - startTime) / 1000);
+        const averageTime = (totalTime / victims.length).toFixed(2);
+        const correctClassifications = victims.filter(v => v.isCorrect).length;
+        const incorrectClassifications = victims.length - correctClassifications;
+
+        setTimeout(() => {
+          alert(`Fim do jogo!
+Acertos: ${correctClassifications}
+Erros: ${incorrectClassifications}
+Pontuação Total: ${score}
+Tempo Total: ${totalTime}s
+Tempo Médio por Vítima: ${averageTime}s`);
+        }, 100);
+      }
+    }
+  </script>
+  <p></p>
+</body>
+</html>
